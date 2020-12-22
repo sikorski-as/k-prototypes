@@ -1,7 +1,7 @@
 import numpy as np
-from itertools import zip_longest
+from scipy import stats
 
-np.seterr(all='raise')
+# np.seterr(all='raise')
 
 
 class Model:
@@ -19,16 +19,20 @@ class Model:
         self._centers: tuple = None
 
     def _init_centers(self, numerical: np.ndarray = None, nominal: np.ndarray = None):
-        n_rows = numerical.shape[0]
+        n_rows = self._number_of_rows(numerical, nominal)
 
         _, n_numerical, _ = self._number_of_features(numerical, nominal)
 
-        numerical_max = np.max(numerical, axis=0)
-        numerical_min = np.min(numerical, axis=0)
-        numerical_centers = np.random.uniform(low=0.0, high=1.0, size=(self._k, n_numerical))
-        numerical_centers = numerical_centers * (numerical_max - numerical_min) + numerical_min
+        numerical_centers = None
+        if numerical is not None:
+            numerical_max = np.max(numerical, axis=0)
+            numerical_min = np.min(numerical, axis=0)
+            numerical_centers = np.random.uniform(low=0.0, high=1.0, size=(self._k, n_numerical))
+            numerical_centers = numerical_centers * (numerical_max - numerical_min) + numerical_min
 
-        nominal_centers = None if nominal is None else nominal[np.random.randint(n_rows, size=self._k)]
+        nominal_centers = None
+        if nominal is not None:
+            nominal_centers = nominal[np.random.randint(n_rows, size=self._k)]
 
         return numerical_centers, nominal_centers
 
@@ -70,11 +74,13 @@ class Model:
         while i < iterations:
             i += 1
             numerical_centers, nominal_centers = self._centers
-            numerical_distances = np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])
+            numerical_distances = 0 if numerical_centers is None \
+                else np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])
             nominal_distances = 0 if nominal_centers is None \
                 else np.array([np.count_nonzero(nominal != c, axis=1) for c in nominal_centers])
             distances = numerical_distances + self._gamma * nominal_distances
             new_assignments = np.argmin(distances, axis=0)
+            self._centers = numerical_centers, nominal_centers
 
             if (assignments == new_assignments).all():
                 return (numerical_centers, nominal_centers), assignments
@@ -82,14 +88,10 @@ class Model:
                 assignments = new_assignments
                 for c in range(self._k):
                     if numerical_centers is not None:
-                        numerical_centers[c] = np.mean(numerical[assignments == c], axis=0)
+                        numerical_centers[c] = np.mean(numerical[assignments == c, :], axis=0)
                     if nominal_centers is not None:
                         # this takes the first mode if there are more than one
-                        nominal_centers = np.apply_along_axis(
-                            lambda x: np.bincount(x).argmax(),
-                            axis=0, arr=nominal[assignments == c]
-                        )
-                    self._centers = numerical_centers, nominal_centers
+                        nominal_centers = stats.mode(nominal[assignments == c, :])[0]
 
         return assignments
 
@@ -129,6 +131,21 @@ class Model:
         n_numerical = numerical.shape[1] if numerical is not None else 0
         n_nominal = nominal.shape[1] if nominal is not None else 0
         return n_numerical + n_nominal, n_numerical, n_nominal
+
+    @staticmethod
+    def _number_of_rows(numerical: np.ndarray, nominal: np.ndarray):
+        num_rows = None if numerical is None else numerical.shape[0]
+        nom_rows = None if nominal is None else nominal.shape[0]
+
+        if num_rows is not None and nom_rows is not None:
+            assert num_rows == nom_rows
+            return num_rows
+        elif num_rows is not None:
+            return num_rows
+        elif nom_rows is not None:
+            return nom_rows
+        else:
+            raise ValueError('Number of rows cannot be inferred when both arrays are None')
 
     @classmethod
     def load_from_file(cls, filepath):
