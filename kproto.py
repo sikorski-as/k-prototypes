@@ -1,12 +1,13 @@
+import random
+
 import numpy as np
 from scipy import stats
 
-
-# np.seterr(all='raise')
+np.seterr(all='raise')
 
 
 class KPrototypesModel:
-    def __init__(self, k: int, alpha: float = 1.0, beta: float = 1.0):
+    def __init__(self, k: int, alpha: float = 1.0, beta: float = 1.0, init_method: str = 'random-improved'):
         """
         Class for K-prototypes clustering.
 
@@ -14,12 +15,14 @@ class KPrototypesModel:
         :param alpha: scaling parameter of numerical data distance (default: 1.0)
         :param beta: scaling parameter of nominal data distance (default: 1.0)
         """
+        assert init_method in ['random', 'random-improved']
         self._k: int = k
         self._alpha: float = alpha
         self._beta: float = beta
         self._n_numerical: int = None
         self._n_nominal: int = None
         self._centers: tuple = None
+        self._init_method = init_method
 
     def _new_centers(self, numerical: np.ndarray = None, nominal: np.ndarray = None) -> tuple:
         """
@@ -31,9 +34,34 @@ class KPrototypesModel:
             first element is np.ndarray where rows are numerical attributes of clusters' centers,
             second element is np.ndarray where rows are nominal attributes for clusters' centers
         """
-        n_rows = self._number_of_rows(numerical, nominal)
+        if self._init_method == 'random':
+            return self._new_centers_random(numerical, nominal)
+        elif self._init_method == 'random-improved':
+            return self._new_centers_random_improved(numerical, nominal)
+        else:
+            raise RuntimeError('{} init method unknown'.format(self._init_method))
 
-        _, n_numerical, _ = self._number_of_features(numerical, nominal)
+    def _new_centers_random(self, numerical: np.ndarray = None, nominal: np.ndarray = None) -> tuple:
+        n_rows = self._number_of_rows(numerical, nominal)
+        _, n_numerical, n_nominal = self._number_of_features(numerical, nominal)
+        numerical_centers = None
+        nominal_centers = None
+
+        if numerical is not None:
+            numerical_max = np.max(numerical, axis=0)
+            numerical_min = np.min(numerical, axis=0)
+            numerical_centers = np.random.uniform(low=0.0, high=1.0, size=(self._k, n_numerical))
+            numerical_centers = numerical_centers * (numerical_max - numerical_min) + numerical_min
+
+        if nominal is not None:
+            nominal_centers = np.copy(nominal[np.random.randint(n_rows, size=self._k)])
+
+        return numerical_centers, nominal_centers
+
+    def _new_centers_random_improved(self, numerical: np.ndarray = None, nominal: np.ndarray = None) -> tuple:
+        n_rows = self._number_of_rows(numerical, nominal)
+        n_centers = self._k
+        _, n_numerical, n_nominal = self._number_of_features(numerical, nominal)
 
         numerical_centers = None
         if numerical is not None:
@@ -44,7 +72,12 @@ class KPrototypesModel:
 
         nominal_centers = None
         if nominal is not None:
-            nominal_centers = nominal[np.random.randint(n_rows, size=self._k)]
+            nominal_centers = np.ndarray(shape=(n_centers, n_nominal), dtype=np.object)
+            for col_id in range(n_nominal):
+                pool = np.unique(nominal[:, col_id]).tolist()  # type: list
+                vals_for_current_column = random.choices(pool, k=n_centers)
+                for center_id in range(n_centers):
+                    nominal_centers[center_id, col_id] = vals_for_current_column[center_id]
 
         return numerical_centers, nominal_centers
 
@@ -97,24 +130,44 @@ class KPrototypesModel:
         while i < iterations:
             i += 1
             numerical_centers, nominal_centers = self._centers
+
+            # numerical distance
             numerical_distances = 0 if numerical_centers is None \
-                else np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])
+                else np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])  # L2 norm
+
+            # nominal distance
             nominal_distances = 0 if nominal_centers is None \
                 else np.array([np.count_nonzero(nominal != c, axis=1) for c in nominal_centers])
+
+            # composite distance (numerical distance and nominal distance together)
             distances = self._alpha * numerical_distances + self._beta * nominal_distances
+
+            # assign points to new centers
             new_assignments = np.argmin(distances, axis=0)
             self._centers = numerical_centers, nominal_centers
 
-            if (assignments == new_assignments).all():
+            if (assignments == new_assignments).all():  # nothing changed, algorithm converged
                 return assignments
             else:
                 assignments = new_assignments
+                # adjust cluster centers:
                 for c in range(self._k):
                     if numerical_centers is not None:
-                        numerical_centers[c] = np.mean(numerical[assignments == c, :], axis=0)
+                        points_assigned_to_current_cluster = numerical[assignments == c, :]
+                        cluster_empty = points_assigned_to_current_cluster.shape[0] == 0
+                        if not cluster_empty:
+                            numerical_centers[c] = np.mean(numerical[assignments == c, :], axis=0)
+                        else:  # if cluster is empty, new random center might be chosen, I simply skip it
+                            pass
                     if nominal_centers is not None:
-                        # this takes the first mode if there are more than one
-                        nominal_centers = stats.mode(nominal[assignments == c, :])[0]
+                        points_assigned_to_current_cluster = nominal[assignments == c, :]
+                        cluster_empty = points_assigned_to_current_cluster.shape[0] == 0
+                        if not cluster_empty:
+                            # this takes the first mode if there are more than one
+                            nominal_centers[c] = stats.mode(points_assigned_to_current_cluster)[0]
+                        else:  # if cluster is empty, new random center might be chosen, I simply skip it
+                            pass
+                self._centers = numerical_centers, nominal_centers
 
         return assignments
 
