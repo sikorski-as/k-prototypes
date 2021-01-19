@@ -1,24 +1,36 @@
 import numpy as np
 from scipy import stats
 
+
 # np.seterr(all='raise')
 
 
-class Model:
-    def __init__(self, k: int, gamma: float):
+class KPrototypesModel:
+    def __init__(self, k: int, alpha: float = 1.0, beta: float = 1.0):
         """
         Class for K-prototypes clustering.
 
         :param k: number of clusters
-        :param gamma: scaling parameter of nominal data distance
+        :param alpha: scaling parameter of numerical data distance (default: 1.0)
+        :param beta: scaling parameter of nominal data distance (default: 1.0)
         """
         self._k: int = k
-        self._gamma: float = gamma
+        self._alpha: float = alpha
+        self._beta: float = beta
         self._n_numerical: int = None
         self._n_nominal: int = None
         self._centers: tuple = None
 
-    def _init_centers(self, numerical: np.ndarray = None, nominal: np.ndarray = None):
+    def _new_centers(self, numerical: np.ndarray = None, nominal: np.ndarray = None) -> tuple:
+        """
+        Return newly initialized centers from given data.
+
+        :param numerical: columns with numerical data
+        :param nominal: columns with nominal data
+        :return: tuple where:
+            first element is np.ndarray where rows are numerical attributes of clusters' centers,
+            second element is np.ndarray where rows are nominal attributes for clusters' centers
+        """
         n_rows = self._number_of_rows(numerical, nominal)
 
         _, n_numerical, _ = self._number_of_features(numerical, nominal)
@@ -37,18 +49,29 @@ class Model:
         return numerical_centers, nominal_centers
 
     def _is_valid(self, numerical: np.ndarray, nominal: np.ndarray, raise_exception: bool = False) -> bool:
+        """
+        Checks if given data is valid for K-prototypes model:
+        1. Number of rows in numerical and nominal data is the same (if both are given).
+        2. If model is already initialized (trained already), new data should have the same number of features.
+        3. At least one feature in numerical or nominal data.
+
+        :param numerical:
+        :param nominal:
+        :param raise_exception: should return exception when data is not valid?
+        :return: True if data is valid, False otherwise
+        """
         n_features, n_numerical, n_nominal = self._number_of_features(numerical, nominal)
 
-        # both arrays should have the same number of rows
+        # 1. both arrays should have the same number of rows
         n_rows_valid = True if (self._n_numerical is None or self._n_nominal is None) \
             else n_numerical.shape[0] == n_nominal.shape[1]
 
-        # if model is already initialized,
+        # 2. if model is already initialized,
         # number of model's attributes of both types should be the same as in the given data
         n_numerical_valid = True if self._n_numerical is None else n_numerical == self._n_numerical
         n_nominal_valid = True if self._n_nominal is None else n_nominal == self._n_nominal
 
-        # there should be at least one feature available for clustering
+        # 3. there should be at least one feature available for clustering
         at_least_one_attribute = n_features > 0
 
         valid = all([n_rows_valid, n_numerical_valid, n_nominal_valid, at_least_one_attribute])
@@ -56,17 +79,17 @@ class Model:
             raise ValueError('Provided data is not valid')
         return valid
 
-    def fit(self, numerical: np.ndarray = None, nominal: np.ndarray = None, iterations: int = None):
+    def fit(self, numerical: np.ndarray = None, nominal: np.ndarray = None, iterations: int = 300):
         """
         Finds K clusters for given numerical and nominal data.
 
         :param numerical: columns with numerical attributes
         :param nominal: columns with nominal attributes
-        :param iterations: number of iterations, None for no limit.
+        :param iterations: number of iterations, None for no limit (algorithm stops when there is no change in cluster assignment).
         """
         self._is_valid(numerical, nominal, raise_exception=True)
         if self._centers is None:
-            self._centers = self._init_centers(numerical, nominal)
+            self._centers = self._new_centers(numerical, nominal)
 
         assignments = None
         i = 0
@@ -78,12 +101,12 @@ class Model:
                 else np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])
             nominal_distances = 0 if nominal_centers is None \
                 else np.array([np.count_nonzero(nominal != c, axis=1) for c in nominal_centers])
-            distances = numerical_distances + self._gamma * nominal_distances
+            distances = self._alpha * numerical_distances + self._beta * nominal_distances
             new_assignments = np.argmin(distances, axis=0)
             self._centers = numerical_centers, nominal_centers
 
             if (assignments == new_assignments).all():
-                return (numerical_centers, nominal_centers), assignments
+                return assignments
             else:
                 assignments = new_assignments
                 for c in range(self._k):
@@ -103,6 +126,10 @@ class Model:
 
     @property
     def centers_internal(self):
+        """
+        Returns internal representation of clusters' centers
+        :return:
+        """
         if self._centers is None:
             raise RuntimeError('Model is not fitted')
         else:
@@ -125,7 +152,7 @@ class Model:
     @staticmethod
     def _number_of_features(numerical: np.ndarray, nominal: np.ndarray) -> tuple:
         """
-        Returns tuple with number of all attributes, number of numerical attributes, number of nominal attributes.
+        Returns tuple of size 3 with: number of all attributes, number of numerical attributes, number of nominal attributes.
         :return: tuple with numbers of features
         """
         n_numerical = numerical.shape[1] if numerical is not None else 0
@@ -149,4 +176,7 @@ class Model:
 
     @classmethod
     def load_from_file(cls, filepath):
-        pass
+        raise RuntimeError('Not implemented')
+
+    def save_to_file(self, filepath):
+        raise RuntimeError('Not implemented')
