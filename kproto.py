@@ -112,6 +112,25 @@ class KPrototypesModel:
             raise ValueError('Provided data is not valid')
         return valid
 
+    @staticmethod
+    def _calculate_distances(numerical: np.ndarray,
+                             nominal: np.ndarray,
+                             numerical_centers: np.ndarray,
+                             nominal_centers: np.ndarray,
+                             alpha: float = 1.0,
+                             beta: float = 1.0):
+
+        # numerical distance
+        numerical_distances = 0 if numerical_centers is None \
+            else np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])  # L2 norm
+
+        # nominal distance
+        nominal_distances = 0 if nominal_centers is None \
+            else np.array([np.count_nonzero(nominal != c, axis=1) for c in nominal_centers])
+
+        # composite distance (numerical distance and nominal distance together)
+        return alpha * numerical_distances + beta * nominal_distances
+
     def fit(self, numerical: np.ndarray = None, nominal: np.ndarray = None, iterations: int = 300):
         """
         Finds K clusters for given numerical and nominal data.
@@ -131,20 +150,13 @@ class KPrototypesModel:
             i += 1
             numerical_centers, nominal_centers = self._centers
 
-            # numerical distance
-            numerical_distances = 0 if numerical_centers is None \
-                else np.array([np.linalg.norm(numerical - c, axis=1) for c in numerical_centers])  # L2 norm
-
-            # nominal distance
-            nominal_distances = 0 if nominal_centers is None \
-                else np.array([np.count_nonzero(nominal != c, axis=1) for c in nominal_centers])
-
-            # composite distance (numerical distance and nominal distance together)
-            distances = self._alpha * numerical_distances + self._beta * nominal_distances
+            # calculate distance of each point to each center
+            distances = self._calculate_distances(numerical, nominal,
+                                                  numerical_centers, nominal_centers,
+                                                  self._alpha, self._beta)
 
             # assign points to new centers
             new_assignments = np.argmin(distances, axis=0)
-            self._centers = numerical_centers, nominal_centers
 
             if (assignments == new_assignments).all():  # nothing changed, algorithm converged
                 return assignments
@@ -201,6 +213,11 @@ class KPrototypesModel:
         # assert same number of rows
         assert numerical_parts.shape[0] == nominal_parts.shape[0]
         return np.hstack((numerical_parts, nominal_parts))
+
+    def distances_matrix(self, numerical_data, nominal_data):
+        return self._calculate_distances(numerical_data, nominal_data,
+                                         numerical_data, nominal_data,
+                                         self._alpha, self._beta)
 
     @staticmethod
     def _number_of_features(numerical: np.ndarray, nominal: np.ndarray) -> tuple:
