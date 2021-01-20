@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 
 import sklearn.preprocessing
@@ -19,39 +21,43 @@ def cluster(*args, **kwargs):
         raise ClusteringError(str(e))
 
 
-def _clustering_report(predicted_labels, silhouette_values, adjusted_rand_values, accuracy_values):
+def _clustering_report(predicted_labels, silhouette_values, adjusted_rand_values, accuracy_values, times):
     convert = lambda val: '-' if (val is None or val == []) else str(val)
     convert_np_array = lambda val: '-' if (val is None or val == []) else str(val.tolist())
 
     def find_max(vals):
         rets = None
         if vals is None or vals == []:
-            rets = None, None, None
+            rets = None, None, None, None
         else:
             argmax = np.argmax(vals)
-            rets = vals[argmax], argmax, predicted_labels[argmax]
-        return convert(rets[0]), convert(rets[1]), convert_np_array(rets[2])
+            rets = vals[argmax], argmax, predicted_labels[argmax], times[argmax]
+        return convert(rets[0]), convert(rets[1]), convert_np_array(rets[2]), convert(rets[3])
 
-    silh_val, silh_id, silh_labels = find_max(silhouette_values)
-    arand_val, arand_id, arand_labels = find_max(adjusted_rand_values)
-    acc_val, acc_id, acc_labels = find_max(accuracy_values)
+    silh_val, silh_id, silh_labels, silh_time = find_max(silhouette_values)
+    arand_val, arand_id, arand_labels, arand_time = find_max(adjusted_rand_values)
+    acc_val, acc_id, acc_labels, acc_time = find_max(accuracy_values)
 
     report = "Report\n" \
              "All attempts:\n" \
         f"  Silhouette values: {convert(silhouette_values)}\n" \
         f"  Adjusted rand index values: {convert(adjusted_rand_values)}\n" \
         f"  Accuracy values: {accuracy_values}\n" \
+        f"  Time values: {times}\n" \
              "Silhouette value: \n" \
         f"  Best value: {silh_val}\n" \
         f"  Best model: {silh_id}\n" \
+        f"  Time taken: {silh_time}\n" \
         f"  Predicted labels: {silh_labels}\n" \
              "Adjusted rand index:\n" \
         f"  Best value: {arand_val}\n" \
         f"  Best model: {arand_id}\n" \
+        f"  Time taken: {arand_time}\n" \
         f"  Predicted labels: {arand_labels}\n" \
              "Accuracy: \n" \
         f"  Best value: {acc_val}\n" \
-        f"  Best attempt: {acc_id}\n" \
+        f"  Best model: {acc_id}\n" \
+        f"  Time taken: {acc_time}\n" \
         f"  Predicted labels: {acc_labels}\n"
     return report
 
@@ -76,11 +82,15 @@ def _cluster(dataset_filename, k,
     models = []
     silhs = []
     predicted_labels = []
+    times = []
 
     for i in range(attempts):
+        start = time.time()
         model = KPrototypesModel(k=k, init_method='random-improved')
         models.append(model)
         predicted_labels_for_current = model.fit(numerical=numerical, nominal=nominal, iterations=500)
+        end = time.time()
+        times.append(end - start)
         predicted_labels_for_current = predicted_labels_for_current.ravel()
 
         # silhouette metric
@@ -100,4 +110,5 @@ def _cluster(dataset_filename, k,
             accuracies.append(accuracy)
         predicted_labels.append(predicted_labels_for_current)
 
-    return _clustering_report(predicted_labels, silhs, scores, accuracies)
+    with print_array_on_one_line():
+        return _clustering_report(predicted_labels, silhs, scores, accuracies, times)

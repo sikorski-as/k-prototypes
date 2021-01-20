@@ -52,9 +52,6 @@ def mixed_flowers():
     print('labels\n', predicted_labels)
 
 
-
-
-
 def test_mixed():
     df = pd.read_csv('data/iris.csv')
     print('data\n', df.iloc[:, [4]])
@@ -80,8 +77,8 @@ def test_mixed():
 
         # silhouette metric
         silh = sklearn.metrics.silhouette_score(model.distances_matrix(numerical, nominal),
-                                               predicted_labels,
-                                               metric='precomputed')
+                                                predicted_labels,
+                                                metric='precomputed')
         silhs.append(silh)
 
         # adjusted rand index
@@ -109,5 +106,27 @@ def test_mixed():
     # print('labels\n', predicted_labels)
 
 
+def clean_fifa():
+    df = pd.read_csv('data/bank.csv')
+    print(df.iloc[:, [0, 1, 2]])
+
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.width', None)
+
+    # print(df.describe())
+    # print(df.shape[0])
+    # print(df.isnull().sum())
+    df.dropna()
+    print(df.shape)
+
+    # print(df.describe())
+    # print(df.shape[0])
+    # print(df.isnull().sum())
+
+    # df.to_csv('data/fifa19.csv')
+
+
 if __name__ == '__main__':
-    test_mixed()
+    # test_mixed()
+    clean_fifa()

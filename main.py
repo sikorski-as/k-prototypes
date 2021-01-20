@@ -53,12 +53,12 @@ def main():
                         type=column_specification,
                         default=[],
                         help='comma separated list of columns to be used as numerical attributes for clustering'
-                             'eg.: 1,2,3,4,5 or 1:5 or 1:4,5 or 1:2, 3, 4:5')
+                             'eg.: 1,2,3,4,5 or 1:5 or 1:4,5 or 1:2,3,4:5')
     parser.add_argument('-nom', '--nominal',
                         type=column_specification,
                         default=[],
                         help='comma separated list of columns to be used as nominal attributes for clustering, '
-                             'eg.: 1,2,3,4,5 or 1:5 or 1:4,5 or 1:2, 3, 4:5')
+                             'eg.: 1,2,3,4,5 or 1:5 or 1:4,5 or 1:2,3,4:5')
     parser.add_argument('-gs', '--true-labels',
                         type=int_greater_than(-1),
                         default=None,
