@@ -1,5 +1,6 @@
 import argparse
 import os
+import pandas as pd
 import re
 
 from clustering import cluster, ClusteringError
@@ -46,9 +47,16 @@ def main():
     parser.add_argument('datafile',
                         type=filepath,
                         help='CSV data file to be used')
+    parser.add_argument('k',
+                        type=int_greater_than(1),
+                        help='number of expected clusters')
     parser.add_argument('-print-report', '--print-report',
                         action='store_true',
                         help='should report be printed on the screen?')
+    parser.add_argument('-save-models', '--save-models',
+                        type=str,
+                        default=None,
+                        help='save models to files with specified prefix')
     parser.add_argument('-num', '--numerical',
                         type=column_specification,
                         default=[],
@@ -63,9 +71,6 @@ def main():
                         type=int_greater_than(-1),
                         default=None,
                         help='column id with true cluster labels (gold standard)')
-    parser.add_argument('k',
-                        type=int_greater_than(1),
-                        help='number of expected clusters')
     parser.add_argument('--attempts',
                         type=int_greater_than(0),
                         default=1,
@@ -89,13 +94,17 @@ def main():
         parser.error("at least one of --numerical and --nominal required")
 
     try:
-        report = cluster(args.datafile, args.k,
-                         args.numerical, args.nominal, args.true_labels,
-                         args.alpha, args.beta,
-                         args.standardize_mean, args.standardize_std,
-                         args.attempts)
+        report, models = cluster(args.datafile, args.k,
+                                 args.numerical, args.nominal, args.true_labels,
+                                 args.alpha, args.beta,
+                                 args.standardize_mean, args.standardize_std,
+                                 args.attempts)
         if args.print_report:
             print(report)
+        if args.save_models is not None:
+            for i, model in enumerate(models):
+                model.save_to_file(f'models/{args.save_models}_model_{i}.json')
+
     except ClusteringError as e:
         print('Clustering error:', e)
         exit(1)

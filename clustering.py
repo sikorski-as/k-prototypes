@@ -111,4 +111,4 @@ def _cluster(dataset_filename, k,
         predicted_labels.append(predicted_labels_for_current)
 
     with print_array_on_one_line():
-        return _clustering_report(predicted_labels, silhs, scores, accuracies, times)
+        return _clustering_report(predicted_labels, silhs, scores, accuracies, times), models
