@@ -1,5 +1,6 @@
 import random
 
+import jsonpickle
 import numpy as np
 from scipy import stats
 
@@ -246,7 +247,9 @@ class KPrototypesModel:
 
     @classmethod
     def load_from_file(cls, filepath):
-        raise RuntimeError('Not implemented')
+        with open(filepath, 'r') as f:
+            return jsonpickle.decode(f.read())
 
     def save_to_file(self, filepath):
-        raise RuntimeError('Not implemented')
+        with open(filepath, 'w') as f:
+            return f.write(jsonpickle.encode(self))
