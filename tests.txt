@@ -1,0 +1,48 @@
+# SERIES 0 (sanity check)
+py main.py data/iris.csv 2 --numerical 0:3                                 --true-labels 4  --print-report --attempts 10 > test01_iris.txt --save-models test01_iris
+
+# SERIES 1
+# k=2..5 a=1.0 b=1.0
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test02_bank_k_2_a_1.0_b_1.0.txt --save-models test02_bank_k_2_a_1.0_b_1.0
+py main.py data/bank.csv 3 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test03_bank_k_3_a_1.0_b_1.0.txt --save-models test03_bank_k_3_a_1.0_b_1.0
+py main.py data/bank.csv 4 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test04_bank_k_4_a_1.0_b_1.0.txt --save-models test04_bank_k_4_a_1.0_b_1.0
+py main.py data/bank.csv 5 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test05_bank_k_5_a_1.0_b_1.0.txt --save-models test05_bank_k_5_a_1.0_b_1.0
+
+# SERIES 2
+# k=2..5 a=1.0 b=1.0 (scaled)
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test06_bank_k_2_a_1.0_b_1.0.txt --save-models test06_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean
+py main.py data/bank.csv 3 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test07_bank_k_3_a_1.0_b_1.0.txt --save-models test07_bank_k_3_a_1.0_b_1.0 --standardize-std --standardize-mean
+py main.py data/bank.csv 4 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test08_bank_k_4_a_1.0_b_1.0.txt --save-models test08_bank_k_4_a_1.0_b_1.0 --standardize-std --standardize-mean
+py main.py data/bank.csv 5 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test09_bank_k_5_a_1.0_b_1.0.txt --save-models test09_bank_k_5_a_1.0_b_1.0 --standardize-std --standardize-mean
+
+# SERIES 3
+# k=2 a=1.0 b=1.0,1.2,1.4,1.6,1.8
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test10_bank_k_2_a_1.0_b_1.0.txt --save-models test10_bank_k_2_a_1.0_b_1.0 --beta 1.0
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test11_bank_k_2_a_1.0_b_1.2.txt --save-models test11_bank_k_2_a_1.0_b_1.2 --beta 1.2
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test12_bank_k_2_a_1.0_b_1.4.txt --save-models test12_bank_k_2_a_1.0_b_1.4 --beta 1.4
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test13_bank_k_2_a_1.0_b_1.6.txt --save-models test13_bank_k_2_a_1.0_b_1.6 --beta 1.6
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test14_bank_k_2_a_1.0_b_1.8.txt --save-models test14_bank_k_2_a_1.0_b_1.8 --beta 1.8
+
+# SERIES 4
+# k=2 a=1.0 b=1.0,1.2,1.4,1.6,1.8,2.0 (scaled)
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test15_bank_k_2_a_1.0_b_1.0.txt --save-models test15_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean --beta 1.0
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test16_bank_k_2_a_1.0_b_1.2.txt --save-models test16_bank_k_2_a_1.0_b_1.2 --standardize-std --standardize-mean --beta 1.2
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test17_bank_k_2_a_1.0_b_1.4.txt --save-models test17_bank_k_2_a_1.0_b_1.4 --standardize-std --standardize-mean --beta 1.4
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test18_bank_k_2_a_1.0_b_1.6.txt --save-models test18_bank_k_2_a_1.0_b_1.6 --standardize-std --standardize-mean --beta 1.6
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test19_bank_k_2_a_1.0_b_1.8.txt --save-models test19_bank_k_2_a_1.0_b_1.8 --standardize-std --standardize-mean --beta 1.8
+
+# SERIES 5
+# k=2 a=1.0,1.2,1.4,1.6,1.8,2.0 b=1.0
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test20_bank_k_2_a_1.0_b_1.0.txt --save-models test20_bank_k_2_a_1.0_b_1.0 --alpha 1.0
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test21_bank_k_2_a_1.2_b_1.0.txt --save-models test21_bank_k_2_a_1.2_b_1.0 --alpha 1.2
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test22_bank_k_2_a_1.4_b_1.0.txt --save-models test22_bank_k_2_a_1.4_b_1.0 --alpha 1.4
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test23_bank_k_2_a_1.6_b_1.0.txt --save-models test23_bank_k_2_a_1.6_b_1.0 --alpha 1.6
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test24_bank_k_2_a_1.8_b_1.0.txt --save-models test24_bank_k_2_a_1.8_b_1.0 --alpha 1.8
+
+# SERIES 6
+# k=2 a=1.0,1.2,1.4,1.6,1.8,2.0 b=1.0 (scaled)
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test25_bank_k_2_a_1.0_b_1.0.txt --save-models test25_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean --alpha 1.0
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test26_bank_k_2_a_1.2_b_1.0.txt --save-models test26_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean --alpha 1.2
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test27_bank_k_2_a_1.4_b_1.0.txt --save-models test27_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean --alpha 1.4
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test28_bank_k_2_a_1.6_b_1.0.txt --save-models test28_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean --alpha 1.6
+py main.py data/bank.csv 2 --numerical 0,5,9,11:14 --nominal 1:4,6:8,10,15 --true-labels 16 --print-report --attempts 10 > test29_bank_k_2_a_1.8_b_1.0.txt --save-models test29_bank_k_2_a_1.0_b_1.0 --standardize-std --standardize-mean --alpha 1.8
